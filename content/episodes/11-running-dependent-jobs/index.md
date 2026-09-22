@@ -18,6 +18,33 @@ weight = 110
 
 From the last session, we're starting with
 
+{{< tabs >}}
+{{< tab name="GitHub" selected=true >}}
+```yaml
+jobs:
+  greeting:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo hello world
+
+  build_skim:
+    runs-on: ubuntu-latest
+    container: rootproject/root:${{ matrix.version }}
+    strategy:
+      matrix:
+        version: [6.26.10-conda, latest]
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - name: build
+        run: |
+          COMPILER=$(root-config --cxx)
+          FLAGS=$(root-config --cflags --libs)
+          $COMPILER -g -O3 -Wall -Wextra -Wpedantic -o skim skim.cxx $FLAGS
+```
+{{< /tab >}}
+{{< tab name="Gitea" >}}
 ```yaml
 jobs:
   greeting:
@@ -44,6 +71,8 @@ jobs:
           FLAGS=$(root-config --cflags --libs)
           $COMPILER -g -O3 -Wall -Wextra -Wpedantic -o skim skim.cxx $FLAGS
 ```
+{{< /tab >}}
+{{< /tabs >}}
 
 We're going to talk about another useful parameter `needs`.
 
@@ -61,6 +90,34 @@ job2 waits until job1 completes successfully. [Further reading](https://docs.git
 How to make `build_skim` job run after `greeting`?
 
 {{< solution title="Solution" >}}
+{{< tabs >}}
+{{< tab name="GitHub" selected=true >}}
+```yaml
+jobs:
+  greeting:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo hello world
+
+  build_skim:
+    needs: greeting
+    runs-on: ubuntu-latest
+    container: rootproject/root:${{ matrix.version }}
+    strategy:
+      matrix:
+        version: [6.26.10-conda, latest]
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - name: build
+        run: |
+          COMPILER=$(root-config --cxx)
+          FLAGS=$(root-config --cflags --libs)
+          $COMPILER -g -O3 -Wall -Wextra -Wpedantic -o skim skim.cxx $FLAGS
+```
+{{< /tab >}}
+{{< tab name="Gitea" >}}
 ```yaml
 jobs:
   greeting:
@@ -88,6 +145,8 @@ jobs:
           FLAGS=$(root-config --cflags --libs)
           $COMPILER -g -O3 -Wall -Wextra -Wpedantic -o skim skim.cxx $FLAGS
 ```
+{{< /tab >}}
+{{< /tabs >}}
 {{< /solution >}}
 {{< /challenge >}}
 

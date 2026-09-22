@@ -14,6 +14,41 @@ weight = 90
 
 From the previous lesson, we tried to build the code against two different ROOT images by adding an extra job:
 
+{{< tabs >}}
+{{< tab name="GitHub" selected=true >}}
+```yaml
+jobs:
+  greeting:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo hello world
+
+  build_skim:
+    runs-on: ubuntu-latest
+    container: rootproject/root:6.26.10-conda
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+      - name: build
+        run: |
+          COMPILER=$(root-config --cxx)
+          FLAGS=$(root-config --cflags --libs)
+          $COMPILER -g -O3 -Wall -Wextra -Wpedantic -o skim skim.cxx $FLAGS
+
+  build_skim_latest:
+    runs-on: ubuntu-latest
+    container: rootproject/root:latest
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+      - name: latest
+        run: |
+          COMPILER=$(root-config --cxx)
+          FLAGS=$(root-config --cflags --libs)
+          $COMPILER -g -O3 -Wall -Wextra -Wpedantic -o skim skim.cxx $FLAGS
+```
+{{< /tab >}}
+{{< tab name="Gitea" >}}
 ```yaml
 jobs:
   greeting:
@@ -51,10 +86,39 @@ jobs:
           FLAGS=$(root-config --cflags --libs)
           $COMPILER -g -O3 -Wall -Wextra -Wpedantic -o skim skim.cxx $FLAGS
 ```
+{{< /tab >}}
+{{< /tabs >}}
 
 {{< callout type="note" title="Building a matrix across different versions" >}}
 We could do better using `matrix`. The latter allows us to test the code against a combination of versions in a single job.
 
+{{< tabs >}}
+{{< tab name="GitHub" selected=true >}}
+```yaml
+jobs:
+  greeting:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo hello world
+
+  build_skim:
+    runs-on: ubuntu-latest
+    container: rootproject/root:${{ matrix.version }}
+    strategy:
+      matrix:
+        version: [6.26.10-conda, latest]
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - name: build
+        run: |
+          COMPILER=$(root-config --cxx)
+          FLAGS=$(root-config --cflags --libs)
+          $COMPILER -g -O3 -Wall -Wextra -Wpedantic -o skim skim.cxx $FLAGS
+```
+{{< /tab >}}
+{{< tab name="Gitea" >}}
 ```yaml
 jobs:
   greeting:
@@ -81,6 +145,8 @@ jobs:
           FLAGS=$(root-config --cflags --libs)
           $COMPILER -g -O3 -Wall -Wextra -Wpedantic -o skim skim.cxx $FLAGS
 ```
+{{< /tab >}}
+{{< /tabs >}}
 YAML truncates trailing zeroes from a floating-point number, which means that `version: [3.9, 3.10, 3.11]` will automatically
 be converted to `version: [3.9, 3.1, 3.11]` (notice `3.1` instead of `3.10`). The conversion will lead to unexpected failures
 as your CI will be running on a version not specified by you. This behavior resulted in several failed jobs after the release

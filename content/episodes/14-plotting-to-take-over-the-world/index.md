@@ -24,6 +24,61 @@ python histograms.py skim_ggH.root ggH hist_ggH.root
 
 This needs to be added to your `.github/workflows/main.yml`, which should look like the following:
 
+{{< tabs >}}
+{{< tab name="GitHub" selected=true >}}
+```yaml
+jobs:
+  greeting:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo hello world
+
+  build_skim:
+    needs: greeting
+    runs-on: ubuntu-latest
+    container: rootproject/root:${{ matrix.version }}
+    strategy:
+      matrix:
+        version: [6.26.10-conda, latest]
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - name: build
+        run: |
+          COMPILER=$(root-config --cxx)
+          FLAGS=$(root-config --cflags --libs)
+          $COMPILER -g -O3 -Wall -Wextra -Wpedantic -o skim skim.cxx $FLAGS
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: skim${{ matrix.version }}
+          path: skim
+
+  skim:
+    needs: build_skim
+    runs-on: ubuntu-latest
+    container: rootproject/root:6.26.10-conda
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: skim6.26.10-conda
+
+      - name: skim
+        run: |
+          chmod +x ./skim
+          ./skim root://eospublic.cern.ch//eos/root-eos/HiggsTauTauReduced/GluGluToHToTauTau.root skim_ggH.root 19.6 11467.0 0.1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: skim_ggH
+          path: skim_ggH.root
+```
+{{< /tab >}}
+{{< tab name="Gitea" >}}
 ```yaml
 jobs:
   greeting:
@@ -81,6 +136,8 @@ jobs:
           name: skim_ggH
           path: skim_ggH.root
 ```
+{{< /tab >}}
+{{< /tabs >}}
 
 {{< challenge title="Adding Artifacts" >}}
 So we need to do two things:
@@ -91,6 +148,56 @@ So we need to do two things:
 You know what? While you're at it, why not delete the `greeting` job and multi-version job as well? There's no need for it anymore 🙂.
 
 {{< solution title="Solution" >}}
+{{< tabs >}}
+{{< tab name="GitHub" selected=true >}}
+```yaml
+...
+...
+...
+ skim:
+   needs: build_skim
+   runs-on: ubuntu-latest
+   container: rootproject/root:6.26.10-conda
+   steps:
+     - name: checkout repository
+       uses: actions/checkout@v4
+
+     - uses: actions/download-artifact@v4
+       with:
+         name: skim6.26.10-conda
+
+     - name: skim
+       run: |
+         chmod +x ./skim
+         ./skim root://eospublic.cern.ch//eos/root-eos/HiggsTauTauReduced/GluGluToHToTauTau.root skim_ggH.root 19.6 11467.0 0.1
+
+     - uses: actions/upload-artifact@v4
+       with:
+         name: skim_ggH
+         path: skim_ggH.root
+
+ plot:
+   needs: skim
+   runs-on: ubuntu-latest
+   container: rootproject/root:6.26.10-conda
+   steps:
+     - name: checkout repository
+       uses: actions/checkout@v4
+
+     - uses: actions/download-artifact@v4
+       with:
+         name: skim_ggH
+
+     - name: plot
+       run: python histograms.py skim_ggH.root ggH hist_ggH.root
+
+     - uses: actions/upload-artifact@v4
+       with:
+         name: histograms
+         path: hist_ggH.root
+```
+{{< /tab >}}
+{{< tab name="Gitea" >}}
 ```yaml
 ...
 ...
@@ -143,6 +250,8 @@ You know what? While you're at it, why not delete the `greeting` job and multi-v
          name: histograms
          path: hist_ggH.root
 ```
+{{< /tab >}}
+{{< /tabs >}}
 {{< /solution >}}
 {{< /challenge >}}
 

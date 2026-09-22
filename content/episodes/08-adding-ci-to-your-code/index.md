@@ -94,6 +94,22 @@ There are several tools that are used for containerization, like Docker, Podman,
 
 We will be using the Docker images hosted at the [`rootproject/root` Docker Hub](https://hub.docker.com/r/rootproject/root). Let's start by using the image with tag `6.26.10-conda`.
 
+{{< tabs >}}
+{{< tab name="GitHub" selected=true >}}
+```yaml
+build_skim:
+  runs-on: ubuntu-latest
+  container: rootproject/root:6.26.10-conda
+  steps:
+    - name: checkout repository
+      uses: actions/checkout@v4
+    - name: build
+      run: |
+        COMPILER=$(root-config --cxx)
+        $COMPILER -g -O3 -Wall -Wextra -Wpedantic -o skim skim.cxx
+```
+{{< /tab >}}
+{{< tab name="Gitea" >}}
 ```yaml
 build_skim:
   runs-on: ubuntu-latest
@@ -109,6 +125,10 @@ build_skim:
         COMPILER=$(root-config --cxx)
         $COMPILER -g -O3 -Wall -Wextra -Wpedantic -o skim skim.cxx
 ```
+
+Actions such as `actions/checkout` need Node.js to run. GitHub takes care of this for you, but on Gitea these actions run inside the ROOT image, which doesn't include Node.js. That's why the Gitea version starts with an extra step that installs it. You'll see this step in the Gitea tab of every example that uses a ROOT image.
+{{< /tab >}}
+{{< /tabs >}}
 
 Note the extra line `container: rootproject/root:6.26.10-conda` that specifies the container image that we want to use. Since it comes pre-packaged with ROOT, we do not need to have a step to install it. This image also contains other tools that we will need for the rest of the tutorial.
 
@@ -213,6 +233,43 @@ Great, so we finally got it working... Let's build both the version of the code 
 What does the `.github/workflow/main.yml` look like now?
 
 {{< solution title="Solution" >}}
+{{< tabs >}}
+{{< tab name="GitHub" selected=true >}}
+```yaml
+jobs:
+  greeting:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo hello world
+
+  build_skim:
+    runs-on: ubuntu-latest
+    container: rootproject/root:6.26.10-conda
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - name: build
+        run: |
+          COMPILER=$(root-config --cxx)
+          FLAGS=$(root-config --cflags --libs)
+          $COMPILER -g -O3 -Wall -Wextra -Wpedantic -o skim skim.cxx $FLAGS
+
+  build_skim_latest:
+    runs-on: ubuntu-latest
+    container: rootproject/root:latest
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - name: latest
+        run: |
+          COMPILER=$(root-config --cxx)
+          FLAGS=$(root-config --cflags --libs)
+          $COMPILER -g -O3 -Wall -Wextra -Wpedantic -o skim skim.cxx $FLAGS
+```
+{{< /tab >}}
+{{< tab name="Gitea" >}}
 ```yaml
 jobs:
   greeting:
@@ -252,6 +309,8 @@ jobs:
           FLAGS=$(root-config --cflags --libs)
           $COMPILER -g -O3 -Wall -Wextra -Wpedantic -o skim skim.cxx $FLAGS
 ```
+{{< /tab >}}
+{{< /tabs >}}
 {{< /solution >}}
 {{< /challenge >}}
 

@@ -20,6 +20,34 @@ Let's just attempt to try and get the code working as it is. Since it worked for
 
 As a reminder of what we've ended with from the last session:
 
+{{< tabs >}}
+{{< tab name="GitHub" selected=true >}}
+```yaml
+jobs:
+  greeting:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo hello world
+
+  build_skim:
+    needs: greeting
+    runs-on: ubuntu-latest
+    container: rootproject/root:${{ matrix.version }}
+    strategy:
+      matrix:
+        version: [6.26.10-conda, latest]
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - name: build
+        run: |
+          COMPILER=$(root-config --cxx)
+          FLAGS=$(root-config --cflags --libs)
+          $COMPILER -g -O3 -Wall -Wextra -Wpedantic -o skim skim.cxx $FLAGS
+```
+{{< /tab >}}
+{{< tab name="Gitea" >}}
 ```yaml
 jobs:
   greeting:
@@ -47,12 +75,30 @@ jobs:
           FLAGS=$(root-config --cflags --libs)
           $COMPILER -g -O3 -Wall -Wextra -Wpedantic -o skim skim.cxx $FLAGS
 ```
+{{< /tab >}}
+{{< /tabs >}}
 
 Since the `skim` binary is built, let's see if we can run it. We need to add a job with the name `skim`.
 
 `skim` is meant to process data (skimming) that we are going to run on.
 
 Let's go ahead and figure out how to define a run job. Seems too easy to be true?
+{{< tabs >}}
+{{< tab name="GitHub" selected=true >}}
+```yaml
+skim:
+  needs: build_skim
+  runs-on: ubuntu-latest
+  container: rootproject/root:6.26.10-conda
+  steps:
+      - name: checkout repository
+        uses: actions/checkout@v4
+
+      - name: skim
+        run: ./skim
+```
+{{< /tab >}}
+{{< tab name="Gitea" >}}
 ```yaml
 skim:
   needs: build_skim
@@ -68,6 +114,8 @@ skim:
       - name: skim
         run: ./skim
 ```
+{{< /tab >}}
+{{< /tabs >}}
 
 
 After you've added the `skim` job, you can push your changes to GitHub:

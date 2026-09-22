@@ -17,6 +17,49 @@ weight = 130
 {{< youtube Bu8-gjtqQNM >}}
 
 {{< challenge title="Recall" >}}
+{{< tabs >}}
+{{< tab name="GitHub" selected=true >}}
+```yaml
+build_skim:
+  needs: greeting
+  runs-on: ubuntu-latest
+  container: rootproject/root:${{ matrix.version }}
+  strategy:
+    matrix:
+      version: [6.26.10-conda, latest]
+  steps:
+    - name: checkout repository
+      uses: actions/checkout@v4
+
+    - name: build
+      run: |
+        COMPILER=$(root-config --cxx)
+        FLAGS=$(root-config --cflags --libs)
+        $COMPILER -g -O3 -Wall -Wextra -Wpedantic -o skim skim.cxx $FLAGS
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: skim${{ matrix.version }}
+        path: skim
+skim:
+  needs: build_skim
+  runs-on: ubuntu-latest
+  container: rootproject/root:6.26.10-conda
+  steps:
+    - name: checkout repository
+      uses: actions/checkout@v4
+
+    - uses: actions/download-artifact@v4
+      with:
+        name: skim6.26.10-conda
+
+    - name: skim
+      run: |
+        chmod +x ./skim
+        ./skim
+```
+{{< /tab >}}
+{{< tab name="Gitea" >}}
 ```yaml
 build_skim:
   needs: greeting
@@ -62,6 +105,8 @@ skim:
         chmod +x ./skim
         ./skim
 ```
+{{< /tab >}}
+{{< /tabs >}}
 {{< /challenge >}}
 
 In the previous lesson, we saw that the executable `skim` takes 5 arguments: input (remote data), output (processed data), cross-section, integrated luminosity, and scale.
@@ -80,6 +125,29 @@ root://eospublic.cern.ch//eos/root-eos/HiggsTauTauReduced/GluGluToHToTauTau.root
 -->
 
 Our YAML file should look like
+{{< tabs >}}
+{{< tab name="GitHub" selected=true >}}
+```yaml
+...
+ skim:
+   needs: build_skim
+   runs-on: ubuntu-latest
+   container: rootproject/root:6.26.10-conda
+   steps:
+     - name: checkout repository
+       uses: actions/checkout@v4
+
+     - uses: actions/download-artifact@v4
+       with:
+         name: skim6.26.10-conda
+
+     - name: skim
+       run: |
+         chmod +x ./skim
+         ./skim root://eosuser.cern.ch//eos/user/g/gstark/AwesomeWorkshopFeb2020/GluGluToHToTauTau.root skim_ggH.root 19.6 11467.0 0.1
+```
+{{< /tab >}}
+{{< tab name="Gitea" >}}
 ```yaml
 ...
  skim:
@@ -102,6 +170,8 @@ Our YAML file should look like
          chmod +x ./skim
          ./skim root://eosuser.cern.ch//eos/user/g/gstark/AwesomeWorkshopFeb2020/GluGluToHToTauTau.root skim_ggH.root 19.6 11467.0 0.1
 ```
+{{< /tab >}}
+{{< /tabs >}}
 
 What about the output?
 ```text
@@ -182,6 +252,38 @@ As it seems like we have a complete CI/CD that does physics - we should see what
 Let's add `artifacts` to our `skim` job to save the `skim_ggH.root` file. Let's have the artifacts expire in a week instead.
 
 {{< solution title="Solution" >}}
+{{< tabs >}}
+{{< tab name="GitHub" selected=true >}}
+```yaml
+...
+skim:
+   needs: build_skim
+   runs-on: ubuntu-latest
+   container: rootproject/root:6.26.10-conda
+   steps:
+     - name: checkout repository
+       uses: actions/checkout@v4
+
+     - uses: actions/download-artifact@v4
+       with:
+         name: skim6.26.10-conda
+
+     - name: access control
+       run: echo ${{ secrets.USER_PASS }} | kinit ${{ secrets.USER_NAME }}@CERN.CH
+
+     - name: skim
+       run: |
+         chmod +x ./skim
+         ./skim root://eosuser.cern.ch//eos/user/g/gstark/AwesomeWorkshopFeb2020/GluGluToHToTauTau.root skim_ggH.root 19.6 11467.0 0.1
+
+     - uses: actions/upload-artifact@v4
+       with:
+         name: skim_ggH
+         path: skim_ggH.root
+         retention-days: 7
+```
+{{< /tab >}}
+{{< tab name="Gitea" >}}
 ```yaml
 ...
 skim:
@@ -213,6 +315,8 @@ skim:
          path: skim_ggH.root
          retention-days: 7
 ```
+{{< /tab >}}
+{{< /tabs >}}
 {{< /solution >}}
 {{< /challenge >}}
 

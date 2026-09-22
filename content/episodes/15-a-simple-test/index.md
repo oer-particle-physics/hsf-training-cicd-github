@@ -16,6 +16,56 @@ weight = 150
 
 So at this point, I'm going to be very hands-off and just explain what you will be doing. Here's where you should be starting from:
 
+{{< tabs >}}
+{{< tab name="GitHub" selected=true >}}
+```yaml
+...
+...
+...
+ skim:
+   needs: build_skim
+   runs-on: ubuntu-latest
+   container: rootproject/root:6.26.10-conda
+   steps:
+     - name: checkout repository
+       uses: actions/checkout@v4
+
+     - uses: actions/download-artifact@v4
+       with:
+         name: skim6.26.10-conda
+
+     - name: skim
+       run: |
+         chmod +x ./skim
+         ./skim root://eospublic.cern.ch//eos/root-eos/HiggsTauTauReduced/GluGluToHToTauTau.root skim_ggH.root 19.6 11467.0 0.1
+
+     - uses: actions/upload-artifact@v4
+       with:
+         name: skim_ggH
+         path: skim_ggH.root
+
+ plot:
+   needs: skim
+   runs-on: ubuntu-latest
+   container: rootproject/root:6.26.10-conda
+   steps:
+     - name: checkout repository
+       uses: actions/checkout@v4
+
+     - uses: actions/download-artifact@v4
+       with:
+         name: skim_ggH
+
+     - name: plot
+       run: python histograms.py skim_ggH.root ggH hist_ggH.root
+
+     - uses: actions/upload-artifact@v4
+       with:
+         name: histograms
+         path: hist_ggH.root
+```
+{{< /tab >}}
+{{< tab name="Gitea" >}}
 ```yaml
 ...
 ...
@@ -68,6 +118,8 @@ So at this point, I'm going to be very hands-off and just explain what you will 
          name: histograms
          path: hist_ggH.root
 ```
+{{< /tab >}}
+{{< /tabs >}}
 
 {{< challenge >}}
 ## Adding a regression test
