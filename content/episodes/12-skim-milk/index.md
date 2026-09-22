@@ -131,6 +131,50 @@ In order to take advantage of passing data between two jobs, one combines `downl
 Let's do it.
 
 {{< solution title="Solution" >}}
+{{< tabs >}}
+{{< tab name="GitHub" selected=true >}}
+```yaml
+...
+...
+build_skim:
+  needs: greeting
+  runs-on: ubuntu-latest
+  container: rootproject/root:${{ matrix.version }}
+  strategy:
+    matrix:
+      version: [6.26.10-conda, latest]
+  steps:
+    - name: checkout repository
+      uses: actions/checkout@v4
+
+    - name: build
+      run: |
+        COMPILER=$(root-config --cxx)
+        FLAGS=$(root-config --cflags --libs)
+        $COMPILER -g -O3 -Wall -Wextra -Wpedantic -o skim skim.cxx $FLAGS
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: skim${{ matrix.version }}
+        path: skim
+
+skim:
+  needs: build_skim
+  runs-on: ubuntu-latest
+  container: rootproject/root:6.26.10-conda
+  steps:
+    - name: checkout repository
+      uses: actions/checkout@v4
+
+    - uses: actions/download-artifact@v4
+      with:
+        name: skim6.26.10-conda
+
+    - name: skim
+      run: ./skim
+```
+{{< /tab >}}
+{{< tab name="Gitea" >}}
 ```yaml
 ...
 ...
@@ -177,6 +221,8 @@ skim:
     - name: skim
       run: ./skim
 ```
+{{< /tab >}}
+{{< /tabs >}}
 
 {{< /solution >}}
 {{< /challenge >}}

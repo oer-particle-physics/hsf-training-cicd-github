@@ -156,6 +156,30 @@ As we saw before, GitHub pre-installs many common software packages and librarie
 
 If we wanted to use Conda instead of Docker, our `build_skim` job would look like this:
 
+{{< tabs >}}
+{{< tab name="GitHub" selected=true >}}
+```yaml
+build_skim:
+  runs-on: ubuntu-latest
+  defaults:
+    run:
+      shell: bash -el {0}
+  steps:
+    - name: checkout repository
+      uses: actions/checkout@v4
+    - name: Install ROOT
+      uses: mamba-org/setup-micromamba@v1
+      with:
+        environment-name: env
+        create-args: root
+    - name: build
+      run: |
+        COMPILER=$(root-config --cxx)
+        FLAGS=$(root-config --cflags --libs)
+        $COMPILER -g -O3 -Wall -Wextra -Wpedantic -o skim skim.cxx $FLAGS
+```
+{{< /tab >}}
+{{< tab name="Gitea" >}}
 ```yaml
 build_skim:
   runs-on: ubuntu-latest
@@ -177,7 +201,9 @@ build_skim:
         $COMPILER -g -O3 -Wall -Wextra -Wpedantic -o skim skim.cxx $FLAGS
 ```
 
-Note that `https://github.com/mamba-org/setup-micromamba@v1` may be called on GitHub as `mamba-org/setup-micromamba`, but the full URL makes it compatible with Gitea (if that Gitea instance does not have `mamba-org/` cloned locally).
+On Gitea, the action is referenced by its full URL, `https://github.com/mamba-org/setup-micromamba@v1`, in case that Gitea instance does not have `mamba-org/` cloned locally.
+{{< /tab >}}
+{{< /tabs >}}
 
 ### Building multiple versions
 
