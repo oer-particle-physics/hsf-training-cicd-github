@@ -78,7 +78,7 @@ To know whether your Python has `pytest`, just run `python -c "import pytest"`. 
 
     ```bash
     git remote set-url origin <gitea clone url of new project>
-    
+
     # e.g.
     # git@gitea.psi.ch:fatour_m/virtual-pipelines-eventselection.git
     ```
@@ -98,8 +98,8 @@ To know whether your Python has `pytest`, just run `python -c "import pytest"`. 
     git push -u origin main
     ```
     This will add the code to your new repository on GitHub. Done!
-  
-  
+
+
 
 If you're having issues, **please let us know immediately**
 since you might not be able to follow this lesson without a proper setup.
