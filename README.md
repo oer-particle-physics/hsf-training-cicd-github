@@ -95,7 +95,7 @@ This lesson is included in the [HEP Software Foundation Training Material](https
 
 The materials developed here are published under open licenses (CC BY 4.0) and can be freely reused and adapted for teaching and training initiatives worldwide.
 
-See the Zenodo record [here](https://doi.org/10.5281/zenodo.22016969).
+See the Zenodo record [here](https://doi.org/10.5281/zenodo.22016968).
 
 
 [lesson-example]: https://carpentries.github.io/lesson-example
